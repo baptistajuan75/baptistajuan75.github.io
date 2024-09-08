@@ -27,7 +27,17 @@
 </head>
 <body>
     <div class="video-container">
-        <iframe src="https://thestreameast.ai/match/cfb/oklahoma-sooners-houston-cougars/31173168" allowfullscreen></iframe>
+        <iframe src="https://thestreameast.ai/match/cfb/oklahoma-sooners-houston-cougars/31173168" 
+                allowfullscreen 
+                sandbox="allow-scripts allow-same-origin allow-forms"
+                referrerpolicy="no-referrer"></iframe>
     </div>
+    <script>
+        document.querySelector('iframe').addEventListener('load', function() {
+            this.contentWindow.addEventListener('click', function(e) {
+                e.stopPropagation();
+            }, true);
+        });
+    </script>
 </body>
 </html>
