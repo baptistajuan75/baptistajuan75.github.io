@@ -35,28 +35,45 @@
     <script>
         document.querySelector('iframe').addEventListener('load', function() {
             var iframe = this;
-            iframe.contentWindow.addEventListener('click', function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-            }, true);
-
-            // Attempt to override window.open
-            try {
-                iframe.contentWindow.open = function() { return null; };
-            } catch (e) {
-                console.log("Could not override window.open");
-            }
-
-            // Attempt to block popups by overriding window.open in the iframe
-            var script = iframe.contentDocument.createElement('script');
-            script.textContent = `
-                window.open = function() { return null; };
-                window.addEventListener('click', function(e) {
+            
+            // Function to block popups and prevent default behavior
+            function blockPopupsAndPreventDefault(win) {
+                win.open = function() { return null; };
+                win.addEventListener('click', function(e) {
                     e.stopPropagation();
                     e.preventDefault();
                 }, true);
+            }
+
+            // Apply to iframe's content window
+            blockPopupsAndPreventDefault(iframe.contentWindow);
+
+            // Inject script into iframe to block popups and prevent default
+            var script = iframe.contentDocument.createElement('script');
+            script.textContent = `
+                (${blockPopupsAndPreventDefault.toString()})(window);
             `;
             iframe.contentDocument.head.appendChild(script);
+
+            // MutationObserver to handle dynamically added iframes or elements
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.tagName === 'IFRAME') {
+                                node.addEventListener('load', function() {
+                                    blockPopupsAndPreventDefault(this.contentWindow);
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            observer.observe(iframe.contentDocument.body, {
+                childList: true,
+                subtree: true
+            });
         });
     </script>
 </body>
