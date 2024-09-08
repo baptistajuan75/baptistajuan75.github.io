@@ -34,9 +34,29 @@
     </div>
     <script>
         document.querySelector('iframe').addEventListener('load', function() {
-            this.contentWindow.addEventListener('click', function(e) {
+            var iframe = this;
+            iframe.contentWindow.addEventListener('click', function(e) {
                 e.stopPropagation();
+                e.preventDefault();
             }, true);
+
+            // Attempt to override window.open
+            try {
+                iframe.contentWindow.open = function() { return null; };
+            } catch (e) {
+                console.log("Could not override window.open");
+            }
+
+            // Attempt to block popups by overriding window.open in the iframe
+            var script = iframe.contentDocument.createElement('script');
+            script.textContent = `
+                window.open = function() { return null; };
+                window.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }, true);
+            `;
+            iframe.contentDocument.head.appendChild(script);
         });
     </script>
 </body>
