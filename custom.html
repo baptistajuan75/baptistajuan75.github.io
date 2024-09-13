@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stream Video Player</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            /* Removed pointer-events: none; to allow typing in the text field */
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="urlInput" placeholder="Enter URL here">
+    <button onclick="loadIframe()">Load URL</button>
+    <div class="video-container">
+        <iframe id="videoIframe" src="" 
+                allowfullscreen 
+                sandbox="allow-scripts allow-same-origin allow-forms"
+                referrerpolicy="no-referrer"></iframe>
+    </div>
+    <script>
+        function loadIframe() {
+            var url = document.getElementById('urlInput').value;
+            document.getElementById('videoIframe').src = url;
+        }
+
+        document.getElementById('videoIframe').addEventListener('load', function() {
+            var iframe = this;
+            
+            // Function to block popups and prevent default behavior
+            function blockPopupsAndPreventDefault(win) {
+                win.open = function() { return null; };
+                win.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }, true);
+            }
+
+            // Apply to iframe's content window
+            blockPopupsAndPreventDefault(iframe.contentWindow);
+
+            // Inject script into iframe to block popups and prevent default
+            var script = iframe.contentDocument.createElement('script');
+            script.textContent = `
+                (${blockPopupsAndPreventDefault.toString()})(window);
+            `;
+            iframe.contentDocument.head.appendChild(script);
+
+            // MutationObserver to handle dynamically added iframes or elements
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.tagName === 'IFRAME') {
+                                node.addEventListener('load', function() {
+                                    blockPopupsAndPreventDefault(this.contentWindow);
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            observer.observe(iframe.contentDocument.body, {
+                childList: true,
+                subtree: true
+            });
+        });
+    </script>
+</body>
+</html>
