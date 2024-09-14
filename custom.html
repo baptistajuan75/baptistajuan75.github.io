@@ -75,6 +75,11 @@
     </div>
 
     <script>
+        window.onload = function() {
+            // Automatically click the submit button after the page loads
+            document.querySelector('button').click();
+        }
+
         function updateIframeSrc() {
             var iframeUrl = document.getElementById('iframeUrl').value;
             var iframe = document.getElementById('videoPlayer');
